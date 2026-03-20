@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    .auth-bg {
+        background: url("{% static 'images/auth-bg.png' %}") center center/cover no-repeat;
+        min-height: calc(100vh - 76px);
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
+        box-shadow: inset 10px 0 20px rgba(0, 0, 0, 0.1);
+        transform: scaleX(-1);
+        /* Flips the image so the dog is on the right, for variety! */
+    }
+
+    .auth-form-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        min-height: calc(100vh - 76px);
+    }
+
+    .auth-card {
+        border: none;
+        border-radius: 15px;
+        background: white;
+    }
+
+    @media (max-width: 768px) {
+        .auth-bg {
+            min-height: 250px;
+            border-radius: 0;
+            transform: none;
+        }
+
+        .auth-form-container {
+            padding: 2rem;
+            min-height: auto;
+        }
+    }
+
+    /* Style Django's default help texts */
+    .helptext {
+        font-size: 0.8rem !important;
+        color: #6c757d !important;
+        /* Bootstrap text-muted */
+        display: block;
+        margin-top: 0.25rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+
+    .helptext ul {
+        padding-left: 1.2rem;
+        margin-top: 0.25rem;
+        margin-bottom: 0;
+    }
+
+    .helptext li {
+        list-style-type: disc;
+    }
+</style>
+
+<div class="container-fluid p-0">
+    <div class="row g-0 flex-row-reverse">
+        <!-- Image Side -->
+        <div class="col-md-6 d-none d-md-block auth-bg">
+        </div>
+
+        <!-- Form Side -->
+        <div class="col-md-6 auth-form-container bg-white">
+            <div class="mx-auto w-100" style="max-width: 480px;">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold text-dark"><i class="bi bi-person-plus text-primary me-2"></i>Join the Community
+                    </h2>
+                    <p class="text-muted">Create an account to report pets and help reunite families.</p>
+                </div>
+
+                <div class="card auth-card shadow-lg">
+                    <div class="card-body p-4">
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-bold text-dark mb-1">
+                                    {{ field.label }}
+                                    {% if field.field.required %}
+                                    <span class="text-danger fw-bold">*</span>
+                                    {% endif %}
+                                    {% if field.help_text %}
+                                    <i class="bi bi-info-circle text-primary ms-1" data-bs-toggle="tooltip"
+                                        data-bs-placement="top" title="{{ field.help_text|striptags }}"
+                                        style="cursor: pointer;"></i>
+                                    {% endif %}
+                                </label>
+                                {% if 'password' in field.name.lower %}
+                                <div class="password-toggle-group">
+                                    {{ field }}
+                                    <button type="button" class="password-toggle-btn"
+                                        onclick="togglePasswordVisibility('{{ field.id_for_label }}', 'toggle-btn-{{ forloop.counter }}')"
+                                        id="toggle-btn-{{ forloop.counter }}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                {% else %}
+                                {{ field }}
+                                {% endif %}
+                                {% if field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in field.errors %}
+                                    <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            <button class="btn btn-primary btn-lg w-100 mt-4 rounded-pill fw-bold shadow-sm"
+                                type="submit">
+                                Create Account <i class="bi bi-person-check ms-1"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <p class="text-center mt-4 mb-0 text-muted">
+                    Already have an account? <a href="{% url 'login' %}" class="fw-bold text-decoration-none">Login
+                        here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const staffCheckbox = document.querySelector('input[name="is_staff_registration"]');
+        const inviteCodeContainer = document.querySelector('input[name="invite_code"]').closest(".mb-3");
+
+        if (staffCheckbox && inviteCodeContainer) {
+            function toggleInviteCode() {
+                if (staffCheckbox.checked) {
+                    inviteCodeContainer.style.display = "block";
+                } else {
+                    inviteCodeContainer.style.display = "none";
+                }
+            }
+
+            toggleInviteCode(); // Initial state
+            staffCheckbox.addEventListener("change", toggleInviteCode);
+        }
+    });
+</script>
+
+{% endblock %}

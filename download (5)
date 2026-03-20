@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container py-5 my-4">
+    <!-- Back Button -->
+    <a href="javascript:history.back()" class="btn btn-outline-secondary mb-4 rounded-pill shadow-sm">
+        <i class="bi bi-arrow-left"></i> Back to Search
+    </a>
+
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="row g-0">
+            <!-- Left Column: Image -->
+            <div class="col-md-6 bg-light d-flex align-items-center justify-content-center p-0 position-relative">
+                {% if pet.image %}
+                <img src="{{ pet.image.url }}" alt="{{ pet.pet_type }}" class="img-fluid w-100 h-100 object-fit-cover"
+                    style="min-height: 400px; max-height: 600px;">
+                {% else %}
+                <div class="text-muted text-center py-5">
+                    <i class="bi bi-image" style="font-size: 5rem;"></i>
+                    <p class="mt-2">No Image Provided</p>
+                </div>
+                {% endif %}
+
+                <!-- Status Badge overlaid on image -->
+                <span
+                    class="position-absolute top-0 start-0 m-4 badge {% if pet.request_type == 'Lost' %}bg-danger{% else %}bg-success{% endif %} p-3 fs-5 shadow rounded-pill">
+                    {{ pet.request_type }}
+                </span>
+
+                {% if pet.is_verified_vet %}
+                <span class="position-absolute bottom-0 end-0 m-4 badge bg-info text-dark p-2 fs-6 shadow rounded-pill">
+                    <i class="bi bi-patch-check-fill text-primary"></i> Verified by Vet
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Right Column: Details -->
+            <div class="col-md-6 d-flex flex-column">
+                <div class="card-body p-5">
+
+                    <h2 class="card-title fw-bold mb-1">{{ pet.breed|default:pet.pet_type }}
+                        {% if pet.gender == 'Male' %}<i class="bi bi-gender-male text-primary fs-4"></i>
+                        {% elif pet.gender == 'Female' %}<i class="bi bi-gender-female text-danger fs-4"></i>{% endif %}
+                    </h2>
+
+                    <p class="text-muted fs-5 mb-4">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ pet.location }}
+                    </p>
+
+                    <div class="row g-3 mb-4 bg-light p-3 rounded-3">
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block small text-uppercase fw-bold">Pet Type</span>
+                            <strong>{{ pet.pet_type }}</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block small text-uppercase fw-bold">Color</span>
+                            <strong>{{ pet.color|default:'Not specified' }}</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block small text-uppercase fw-bold">Size</span>
+                            <strong>{{ pet.size|default:'Unknown' }}</strong>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="text-muted d-block small text-uppercase fw-bold">Age</span>
+                            <strong>{{ pet.age|default:'Unknown' }} {{ pet.age_unit }}</strong>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mb-3">Description</h5>
+                    <p class="card-text mb-5 text-secondary" style="line-height: 1.7;">
+                        {{ pet.description|default:"No additional details provided."|linebreaks }}
+                    </p>
+
+                    <div class="mt-auto">
+                        <h5 class="fw-bold mb-3 border-bottom pb-2">Contact Information</h5>
+
+                        {% if user.is_authenticated %}
+                        {% if has_contact_access %}
+                        <div class="bg-success bg-opacity-10 p-4 rounded-4 border border-success border-opacity-25 text-center">
+                            <h6 class="text-success fw-bold mb-3"><i class="bi bi-unlock-fill me-2"></i>Access Granted
+                            </h6>
+                            <p class="text-muted small mb-3">Your contact request was approved. You can now contact the pet owner.</p>
+                            
+                            <button class="btn btn-outline-success rounded-pill px-4 shadow-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#ownerContactDetails" aria-expanded="false" aria-controls="ownerContactDetails">
+                                <i class="bi bi-person-lines-fill me-2"></i> View Owner Contact
+                            </button>
+                            
+                            <div class="collapse mt-3 text-start" id="ownerContactDetails">
+                                <div class="card card-body border-0 bg-white shadow-sm rounded-4">
+                                    <h6 class="fw-bold mb-3 border-bottom pb-2">Owner Details</h6>
+                                    <p class="mb-2 fw-medium"><i class="bi bi-person-fill text-muted me-2"></i> {{ pet.user.first_name|default:pet.user.username }} {{ pet.user.last_name }}</p>
+
+                                    {% if pet.contact_information %}
+                                    <p class="mb-3 fw-medium"><i class="bi bi-telephone-fill text-muted me-2"></i> {{ pet.contact_information }}</p>
+                                    {% endif %}
+                                    
+                                    <p class="mb-3 fw-medium"><i class="bi bi-envelope-at-fill text-muted me-2"></i> {{ pet.user.email }}</p>
+
+                                    <div class="d-grid mt-2">
+                                        <a href="mailto:{{ pet.user.email }}?subject={{ pet.request_type }} Pet: {{ pet.breed }} in {{ pet.location }}"
+                                            class="btn btn-primary rounded-pill shadow-sm">
+                                            <i class="bi bi-envelope-fill me-2"></i> Email Reporter
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif contact_request_status == 'Pending' %}
+                        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center" role="alert">
+                            <i class="bi bi-hourglass-split fs-4 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Request Pending Approval</h6>
+                                <p class="mb-0 small">Site administrators are currently reviewing your request to access
+                                    this user's contact details. You will be notified shortly.</p>
+                            </div>
+                        </div>
+                        {% elif contact_request_status == 'Rejected' %}
+                        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center" role="alert">
+                            <i class="bi bi-x-circle-fill fs-4 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Your request was declined by staff.</h6>
+                                <p class="mb-0 small">Your request to view these contact details was declined by
+                                    moderators.</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="bg-light p-4 rounded-4 text-center border">
+                            <i class="bi bi-incognito fs-1 text-muted mb-2 d-block"></i>
+                            <h6 class="fw-bold text-dark mb-2">Private Contact Info</h6>
+                            <p class="text-muted small mb-4">To ensure the safety of our community, contact information
+                                is hidden by default. Please request access to converse with the poster.</p>
+                            <button class="btn btn-primary rounded-pill px-4 shadow-sm w-100" data-bs-toggle="modal"
+                                data-bs-target="#contactRequestModal">
+                                <i class="bi bi-shield-lock-fill me-2"></i> Request Contact Details
+                            </button>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="bg-light p-4 rounded-4 text-center border">
+                            <p class="text-muted mb-3">You must be logged in to request contact access.</p>
+                            <a href="{% url 'login' %}?next={{ request.path }}"
+                                class="btn btn-outline-primary rounded-pill px-4 w-100">Login</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+                <!-- Card Footer with Details and Report Abuse Button -->
+                <div
+                    class="card-footer bg-white border-top-0 px-5 pt-0 pb-4 d-flex justify-content-between align-items-center text-muted small flex-wrap gap-3">
+                    <span><i class="bi bi-clock me-1"></i> Reported {{ pet.created_at|timesince }} ago</span>
+
+                    <div class="d-flex align-items-center gap-2">
+                        {% if request.session.staff_access and pet.status != 'Accepted' %}
+                        <form method="post" action="{% url 'update-request-status' pet.id %}" class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="Accepted">
+                            <button class="btn btn-sm btn-success shadow-sm rounded-pill px-3 fw-bold"
+                                title="Approve"><i class="bi bi-check-lg me-1"></i>Accept Request</button>
+                        </form>
+                        <form method="post" action="{% url 'update-request-status' pet.id %}" class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="status" value="Rejected">
+                            <button class="btn btn-sm btn-outline-warning shadow-sm rounded-pill px-3 fw-bold"
+                                title="Reject"><i class="bi bi-x-lg me-1"></i>Reject</button>
+                        </form>
+                        {% endif %}
+
+                        {% if user.is_authenticated and pet.user != user %}
+                        {% if not has_reported %}
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                            data-bs-toggle="modal" data-bs-target="#reportAbuseModal">
+                            <i class="bi bi-flag-fill"></i> Report Fake/Abuse
+                        </button>
+                        {% else %}
+                        <span class="text-danger small fw-bold bg-danger bg-opacity-10 px-3 py-1 rounded-pill"><i
+                                class="bi bi-info-circle-fill"></i> Profile Reported</span>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Abuse Modal -->
+<div class="modal fade" id="reportAbuseModal" tabindex="-1" aria-labelledby="reportAbuseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <form method="POST" action="{% url 'pet-detail' pet.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header bg-danger text-white border-bottom-0 pb-3 rounded-top-4">
+                    <h5 class="modal-title fw-bold" id="reportAbuseModalLabel"><i
+                            class="bi bi-exclamation-triangle-fill me-2"></i>Report Pet Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4">If you believe this profile is fake, spam, or violates community
+                        guidelines, please describe why below. Our staff will review it.</p>
+ 
+                    <div class="mb-3">
+                        <label for="id_reason" class="form-label fw-bold text-dark small text-uppercase">Reason for reporting:</label>
+                        <textarea class="form-control" id="id_reason" name="reason" rows="4" required
+                            placeholder="E.g., Fake photo, completely wrong address, spam link in description..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_location" class="form-label fw-bold text-dark small text-uppercase">Location (If Applicable)</label>
+                        <input type="text" class="form-control" id="id_location" name="location"
+                            placeholder="City or area where the incident occurred">
+                    </div>
+ 
+                    <div class="mb-3">
+                        <label for="id_image" class="form-label fw-bold text-dark small text-uppercase">Supporting Image</label>
+                        <input type="file" class="form-control" id="id_image" name="image" accept="image/*">
+                        <div class="form-text">Attach a screenshot or image proof.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 pb-4 pe-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="submit_abuse_report" class="btn btn-danger rounded-pill px-4 shadow-sm">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Contact Request Modal -->
+<div class="modal fade" id="contactRequestModal" tabindex="-1" aria-labelledby="contactRequestModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <form method="POST" action="{% url 'pet-detail' pet.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white border-bottom-0 pb-3 rounded-top-4">
+                    <h5 class="modal-title fw-bold" id="contactRequestModalLabel"><i
+                            class="bi bi-shield-lock-fill me-2"></i>Request Contact Access</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4">To protect our members, we require a brief explanation before
+                        revealing contact information. Site administrators review these requests to prevent spam.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase">Reason for Contact</label>
+                        {{ contact_form.reason }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase">Message / Proof Context</label>
+                        {{ contact_form.message }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase">Supporting Image
+                            (Optional)</label>
+                        {{ contact_form.image }}
+                        <div class="form-text">Attach an image if you have a photo of the found pet or matching collars.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 pb-4 pe-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4"
+                        data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="submit_contact_request"
+                        class="btn btn-primary rounded-pill px-4 shadow-sm">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Comments Section -->
+<div class="row mt-5">
+    <div class="col-md-8 mx-auto">
+        <h4 class="fw-bold mb-4">Comments & Tips ({{ comments.count }})</h4>
+
+        <!-- Comment Form -->
+        <div class="card border-0 shadow-sm mb-4 rounded-4">
+            <div class="card-body p-4">
+                {% if user.is_authenticated %}
+                <form method="POST" action="{% url 'pet-detail' pet.id %}">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Post Comment</button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-2">You must be logged in to leave a comment.</p>
+                    <a href="{% url 'login' %}?next={{ request.path }}"
+                        class="btn btn-outline-primary rounded-pill px-4">Log In to Comment</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Comment List -->
+        <div class="comment-list">
+            {% for comment in comments %}
+            <div class="card border-0 shadow-sm mb-3 rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0">
+                            {% if comment.user == pet.user %}
+                            <span class="badge bg-primary me-2">Owner</span>
+                            {% endif %}
+                            {{ comment.user.first_name|default:comment.user.username }}
+                        </h6>
+                        <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                    </div>
+                    <p class="mb-0 text-secondary">{{ comment.content|linebreaksbr }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-chat-dots fs-1 d-block mb-3"></i>
+                <p>No comments yet. Be the first to share a sighting or tip!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %}
