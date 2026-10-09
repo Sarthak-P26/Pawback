@@ -1,40 +1,57 @@
-{% extends 'base.html' %}
-{% load static %}
-{% block content %}
+# PawBack Project
 
-<div class="row mb-4 justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                {% if profile.profile_image %}
-                <img src="{{request.user.profile.profile_image.url}}" alt="Profile Image" class="rounded-circle mb-3"
-                    width="150" height="150">
-                {% endif %}
+A pet adoption and shelter management portal with a Django backend and a frontend build.
 
+## Project structure
 
-                <h4>{{ request.user.username }}</h4>
-                <p class="text-muted mb-1">{{ request.user.email }}</p>
+```text
+project-root/
+├── backend/                    # backend workspace / virtualenv area
+├── docs/
+│   └── PROJECT_STRUCTURE.md   # structure notes
+├── frontend/
+│   ├── dist/                   # built frontend bundle
+│   └── node_modules/           # frontend dependencies
+├── legacy/
+│   ├── duplicates/             # one-off or duplicate legacy files
+│   ├── migrations/             # old migration files kept out of the root
+│   └── misc/                   # extra historical files
+├── logs/                       # local runtime logs
+├── static/
+│   └── images/                 # static images and media assets
+├── templates/                  # HTML templates
+├── admin.py
+├── apps.py
+├── asgi.py
+├── forms.py
+├── manage.py
+├── pet_extras.py
+├── README.md
+├── requirements.txt
+├── settings.py
+├── staff_tags.py
+├── urls.py
+├── views.py
+└── ...project config files
+```
 
-                {% if request.user.profile.city %}
-                <p class="mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ request.user.profile.city }}</p>
-                {% endif %}
+## Getting started
 
-                {% if request.user.profile.preferred_pet_type and request.user.profile.preferred_pet_type != 'None' %}
-                <p class="mb-1"><i class="bi bi-heart-fill text-danger me-1"></i> Prefers: <strong>{{
-                        request.user.profile.preferred_pet_type }}s</strong></p>
-                {% endif %}
+1. Create and activate a Python virtual environment.
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run the Django app:
+   ```bash
+   python manage.py runserver
+   ```
+4. Serve the frontend build locally if needed from the `frontend/` directory.
 
-                {% if request.user.profile.phone %}
-                <p class="mb-3"><i class="bi bi-telephone-fill text-muted me-1"></i> {{ request.user.profile.phone }}
-                </p>
-                {% endif %}
+## Notes
 
-                <a href="{% url 'profile-update' %}" class="btn btn-outline-secondary btn-sm mt-3 w-100">Edit
-                    Profile</a>
-            </div>
-        </div>
-    </div>
-
-
-
-    {% endblock %}
+- Template files were consolidated into `templates/`.
+- Static images and media were consolidated into `static/images/`.
+- Legacy and duplicate files were moved into `legacy/` to keep the root clean.
+- Runtime logs are stored under `logs/` instead of cluttering the app folders.
+- For more details, see [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md).
